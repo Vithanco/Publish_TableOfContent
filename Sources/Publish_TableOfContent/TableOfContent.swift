@@ -9,6 +9,11 @@ import Foundation
 import Publish
 import Plot
 
+
+public protocol HasShortTitle {
+    var shortTitle: String?  {get set}
+}
+
 public protocol TableOfContentEntry : Equatable {
     var title: String { get }
     var path: Path { get }
@@ -25,7 +30,7 @@ public extension TableOfContentEntry {
     }
 }
 
-extension Item <VithancoWeb>: TableOfContentEntry {
+extension Item: TableOfContentEntry  where Site.ItemMetadata : HasShortTitle{
     public var shortTitle: String {
         let result = self.metadata.shortTitle ?? self.title
         if result == "" {
@@ -150,7 +155,7 @@ public struct TableOfContent: Component {
     }
 }
 
-public struct Breadcrumps: Component {
+public struct Breadcrumps<Site: Website>: Component where Site.ItemMetadata : HasShortTitle {
     var originalPath: Path
     var _body: ComponentGroup
     
@@ -162,7 +167,7 @@ public struct Breadcrumps: Component {
         : EmptyComponent() as Component
     }
     
-    init(section: Section<VithancoWeb>, item: any TableOfContentEntry){
+    init(section: Section<Site>, item: any TableOfContentEntry)  {
         self.originalPath = item.path
         var converted = section.items
             .filter({return item.path.hasAncestor($0.path)})
