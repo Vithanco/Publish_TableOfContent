@@ -10,7 +10,8 @@ It will switch back as soon as possible.
 I use this not really as a plugin, but as as HTML Component. 
 
 First, ensure protocol compliance
-'''// This type acts as the configuration for your website.
+'''
+// This type acts as the configuration for your website.
 struct YourWebSite: Publish.Website {
     enum SectionID: String, WebsiteSectionID {
         // Add the sections that you want your website to contain here:
@@ -22,6 +23,7 @@ struct YourWebSite: Publish.Website {
 '''
 
 This will allow your website to create a TOC! Use it similar to this:
+
 '''
 func makeItemHTML(for item: Item<Site>, context: PublishingContext<Site>) throws -> HTML {
     return  HTML(
