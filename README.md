@@ -33,7 +33,7 @@ func makeItemHTML(for item: Item<Site>, context: PublishingContext<Site>) throws
                 SiteHeader(context: context, selectedSelectionID: item.sectionID)
                 ItemWrapper{
                     Article {
-                        Breadcrumps(section: context.sections[item.sectionID],item: item)   //relevant
+                        Breadcrumbs(section: context.sections[item.sectionID],item: item)   //relevant
                         H1(item.content.title)
                         Div(item.content.body).class("content")
                     }
