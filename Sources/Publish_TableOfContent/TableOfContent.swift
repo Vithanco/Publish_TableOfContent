@@ -14,10 +14,16 @@ public protocol HasShortTitle {
     var shortTitle: String?  {get set}
 }
 
+public protocol HasDate {
+    var date: Date?  {get set}
+}
+
+
 public protocol TableOfContentEntry : Equatable {
     var title: String { get }
     var path: Path { get }
     var shortTitle: String {get}
+    var date: Date? {get}
 }
 
 public extension TableOfContentEntry {
@@ -30,7 +36,11 @@ public extension TableOfContentEntry {
     }
 }
 
-extension Item: TableOfContentEntry  where Site.ItemMetadata : HasShortTitle{
+extension Item: TableOfContentEntry  where Site.ItemMetadata : HasShortTitle & HasDate{
+    public var date: Date? {
+        return self.metadata.date
+    }
+    
     public var shortTitle: String {
         let result = self.metadata.shortTitle ?? self.title
         if result == "" {
@@ -42,10 +52,18 @@ extension Item: TableOfContentEntry  where Site.ItemMetadata : HasShortTitle{
 
 extension Page: TableOfContentEntry {
     public var shortTitle: String {
-        return title    }
+        return title
+    }
+    public var date: Date? {
+        return nil
+    }
 }
 
 extension Section: TableOfContentEntry {
+    public var date: Date? {
+        return nil
+    }
+    
     public static func == (lhs: Section, rhs: Section) -> Bool {
         return lhs.path == rhs.path && lhs.title == rhs.title
     }
@@ -56,9 +74,14 @@ extension Section: TableOfContentEntry {
 }
 
 extension Index: TableOfContentEntry {
+    public var date: Date? {
+        return nil
+    }
+    
     public static func == (lhs: Index, rhs: Index) -> Bool {
         return lhs.path == rhs.path && lhs.title == rhs.title
     }
+    
     
     public var shortTitle: String {
         return title
@@ -75,9 +98,11 @@ extension Path {
 class TOCData : Equatable {
     let item: any TableOfContentEntry
     var children: [TOCData]
+    var fileMode: HTMLFileMode
     
-    init(item: any TableOfContentEntry) {
+    init(item: any TableOfContentEntry, fileMode: HTMLFileMode) {
         self.item = item
+        self.fileMode = fileMode
         children = []
     }
     
@@ -108,7 +133,7 @@ class TOCData : Equatable {
     }
     
     @discardableResult func addChild(_ item: any TableOfContentEntry) -> TOCData {
-        let result = TOCData(item: item)
+        let result = TOCData(item: item, fileMode: self.fileMode)
         if let parent = getParent(item) {
             parent.children.append(result)
         } else {
@@ -119,7 +144,9 @@ class TOCData : Equatable {
     
     var childrenAsHTML: Node<HTML.BodyContext> {
         return .if(children.count > 0,.ul(.forEach(children){
-            return .li( .a(.href($0.item.path.absoluteString), .p(.text($0.item.shortTitle))),$0.childrenAsHTML)
+            let link = self.fileMode.filePath(path:$0.item.path)
+            debugPrint("toc: \($0.item.path) -> \(link)")
+            return .li( .a(.href(link), .p(.text($0.item.shortTitle))),$0.childrenAsHTML)
         }))
     }
     
@@ -129,10 +156,35 @@ class TOCData : Equatable {
     
 }
 
+public typealias TableOfContentSorter = (any TableOfContentEntry, any TableOfContentEntry) -> Bool
+
+public enum TableOfContentSortingOrder {
+    case title
+    case date
+    
+    var sorting : TableOfContentSorter {
+        switch self {
+            case .title : return {return $0.path ~< $1.path}
+            case .date : return {
+                if let a = $0.date {
+                    if let b = $1.date {
+                        return a > b
+                    } else {
+                        return false
+                    }
+                } else {
+                    return true
+                }
+            }
+        }
+    }
+}
+
 public struct TableOfContent: Component {
     // var items: [TableOfContentEntry]
     var originalPath: Path
     var toc: TOCData
+    var fileMode: HTMLFileMode
     
     
     public var body: Component {
@@ -142,12 +194,13 @@ public struct TableOfContent: Component {
             self.toc.childrenAsHTML }.class("toc-list") as Component : EmptyComponent() as Component
     }
     
-    public init(items: [any TableOfContentEntry], item: any TableOfContentEntry){
+    public init(items: [any TableOfContentEntry], item: any TableOfContentEntry, fileMode: HTMLFileMode = .foldersAndIndexFiles, sortedBy: TableOfContentSortingOrder){
         self.originalPath = item.path
+        self.fileMode = fileMode
         let filteredItems = items.filter({return item.path.hasChild($0.path)})
-            .sorted(by: {return $0.path ~< $1.path})
+            .sorted(by: sortedBy.sorting)
         
-        self.toc = TOCData(item: item)
+        self.toc = TOCData(item: item, fileMode: fileMode)
         for item in filteredItems {
             toc.addChild(item)
         }

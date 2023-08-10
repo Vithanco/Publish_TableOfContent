@@ -29,7 +29,7 @@ public struct Breadcrumbs<Site: Website>: Component where Site.ItemMetadata : Ha
             .sorted(by: {return $0.path ~< $1.path})
             .map({Link($0.title, url: $0.path.absoluteString).class("breadcrumb")})
         for i in stride (from: converted.count-1, through: 1, by: -1) {
-            converted.insert(Image(url: "/images/socialmedia-icons/chevron.svg", description: "breadcrumb separator"), at: i)
+            converted.insert(Image(url: "/images/toc/chevron.svg", description: "breadcrumb separator"), at: i)
         }
         _body = ComponentGroup(members: converted)
     }
