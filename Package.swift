@@ -15,7 +15,6 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         .package(
-            name: "Publish",
             url: "https://github.com/vithanco/Publish.git",
             from: "0.9.0")
     ],
