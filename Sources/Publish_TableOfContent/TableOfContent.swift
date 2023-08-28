@@ -145,7 +145,7 @@ class TOCData : Equatable {
     var childrenAsHTML: Node<HTML.BodyContext> {
         return .if(children.count > 0,.ul(.forEach(children){
             let link = self.fileMode.filePath(path:$0.item.path)
-            debugPrint("toc: \($0.item.path) -> \(link)")
+          //  debugPrint("toc: \($0.item.path) -> \(link)")
             return .li( .a(.href(link), .p(.text($0.item.shortTitle))),$0.childrenAsHTML)
         }))
     }
