@@ -30,10 +30,10 @@ public extension TableOfContentEntry {
     var rPath: Path {
         return Path(path.withoutIndex)
     }
-    
-    static func == (lhs: any TableOfContentEntry, rhs: any TableOfContentEntry) -> Bool {
-        return lhs.path == rhs.path && lhs.title == rhs.title
-    }
+}
+
+func == <A: TableOfContentEntry, B: TableOfContentEntry> (lhs: A, rhs: B) -> Bool {
+    return lhs.path == rhs.path && lhs.title == rhs.title
 }
 
 extension Item: TableOfContentEntry  where Site.ItemMetadata : HasShortTitle & HasDate{
